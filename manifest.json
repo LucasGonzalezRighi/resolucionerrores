@@ -12,5 +12,5 @@
     "background_color": "#ffffff",
     "display": "standalone",
     "scope": "/stock-counter/",
-    "theme_color": "#000000"
+    "theme_color": "#0d6efd"
   }

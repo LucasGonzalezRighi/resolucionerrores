@@ -157,6 +157,72 @@ barcodeInput.addEventListener('keyup', (e) => {
 
 barcodeEnter.addEventListener('click', () => addBarcode(barcodeInput.value));
 
+// --- Global scan capture ---------------------------------------------------
+// The barcode scanner behaves like a keyboard (types the code + Enter). If the
+// input ever loses focus, scans would be dropped. To avoid that, we also listen
+// at the document level and accumulate the scan into barcodeInput, regardless of
+// what is focused. We skip cases where the user is genuinely typing elsewhere.
+
+function isTypingElsewhere() {
+    // A SweetAlert dialog (edit / export / import / menu) is open
+    if (typeof Swal !== 'undefined' && Swal.isVisible && Swal.isVisible()) return true;
+    const active = document.activeElement;
+    if (!active || active === barcodeInput) return false;
+    if (active.isContentEditable) return true;
+    const tag = active.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+}
+
+function flashInput() {
+    barcodeInput.classList.add('capturing');
+    clearTimeout(flashInput._timer);
+    flashInput._timer = setTimeout(() => barcodeInput.classList.remove('capturing'), 150);
+}
+
+document.addEventListener('keydown', (e) => {
+    // The input is focused -> its own keyup handler already covers it.
+    if (document.activeElement === barcodeInput) return;
+    // Don't hijack dialogs, other fields, or shortcut combos.
+    if (isTypingElsewhere()) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+    if (e.key === 'Enter' || e.keyCode === 13) {
+        e.preventDefault(); // don't also activate a focused button
+        addBarcode(barcodeInput.value);
+        return;
+    }
+    if (e.key === 'Backspace') {
+        e.preventDefault();
+        barcodeInput.value = barcodeInput.value.slice(0, -1);
+        flashInput();
+        return;
+    }
+    if (e.key && e.key.length === 1) { // printable character
+        e.preventDefault();
+        barcodeInput.value += e.key;
+        flashInput();
+    }
+});
+
+// --- Refocus fallbacks ------------------------------------------------------
+// Belt-and-suspenders: bring focus (and the soft keyboard) back to the input
+// when the user taps an empty area or returns to the app.
+
+function refocusInput() {
+    if (typeof Swal !== 'undefined' && Swal.isVisible && Swal.isVisible()) return;
+    barcodeInput.focus();
+}
+
+document.addEventListener('click', (e) => {
+    // Don't steal focus from interactive controls (buttons, the edit pencil, inputs).
+    if (e.target.closest('button, input, textarea, select, a, .bi')) return;
+    refocusInput();
+});
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refocusInput();
+});
+
 function deleteItem(index) {
     const indexToRemove = sections[currentSection].findIndex(el => el.index === index);
     sections[currentSection].splice(indexToRemove, 1);

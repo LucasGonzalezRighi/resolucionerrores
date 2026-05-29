@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0d6efd" />
     <link rel="stylesheet" href="./styles/bootstrap-icons.min.css"/>
     <link rel="stylesheet" href="./styles/bootstrap.min.css"/>
     <link rel="stylesheet" href="./styles/styles.css" />
@@ -23,69 +24,54 @@
     <title>Benasu Stock</title>
   </head>
   <body>
-    <div class="container">
-      <div class="row">
-        <div class="col d-flex justify-content-between p-0">
-          <h1 class="m-1">Benasu Stock</h1>
-          <button class="btn btn-outline-primary" id="mainMenu"><i class="bi bi-list"></i></button>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col d-flex mb-2 align-items-center justify-content-center controls">
-          <p>Sección &nbsp;<span id="currentSectionSpan">1</span>/<span id="totalSectionsSpan">1</span></p>
-          <button
-            type="button"
-            id="sectionPlus"
-            class="btn btn-primary btn-section"
-          >
-            +
-          </button>
-          <button
-            type="button"
-            id="sectionMinus"
-            class="btn btn-primary btn-section disabled"
-          >
-            -
-          </button>
-          <button
-            type="button"
-            id="sectionDelete"
-            class="btn btn-primary btn-section disabled"
-          >
-          <i class="bi bi-trash"></i>
-          </button>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col">
-            <div class="input-group mb-3">
-                <input type="text" id="barcodeInput" class="form-control" placeholder="Código de Barras" aria-label="Código de Barras" aria-describedby="button-addon2">
-                <button class="btn btn-primary" id="barcodeEnter" type="button" id="button-addon2"><i class="bi bi-arrow-return-left"></i></button>
-            </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col d-flex justify-content-between">
-            <p><strong>Total Sección:</strong> <span id="totalItemsSection">0</span></p>
-            <p><strong>Total:</strong> <span id="totalItems">0</span></p>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th scope="col">Editar</th>
-                        <th scope="col">Cantidad</th>
-                        <th scope="col">Código de Barras</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tableBody">
+    <header class="app-header">
+      <h1><i class="bi bi-upc-scan"></i> Benasu Stock</h1>
+      <button class="menu-btn" id="mainMenu" aria-label="Menú"><i class="bi bi-list"></i></button>
+    </header>
 
-                  </tbody>
-            </table>
+    <div class="app">
+      <div class="scan-zone">
+        <div class="controls">
+          <span class="section-label">Sección <strong id="currentSectionSpan">1</strong> / <span id="totalSectionsSpan">1</span></span>
+          <div class="section-buttons">
+            <button type="button" id="sectionPlus" class="btn btn-primary btn-section"><i class="bi bi-plus"></i></button>
+            <button type="button" id="sectionMinus" class="btn btn-primary btn-section disabled"><i class="bi bi-dash"></i></button>
+            <button type="button" id="sectionDelete" class="btn btn-danger btn-section disabled"><i class="bi bi-trash"></i></button>
+          </div>
+        </div>
+
+        <div class="input-group scan-input">
+          <input type="text" id="barcodeInput" class="form-control" placeholder="Código de Barras" aria-label="Código de Barras">
+          <button class="btn btn-primary" id="barcodeEnter" type="button" aria-label="Agregar"><i class="bi bi-arrow-return-left"></i></button>
+        </div>
+        <p class="scan-ready"><i class="bi bi-broadcast"></i> Listo para escanear</p>
+
+        <div class="totals">
+          <div class="total-card">
+            <span class="total-label">Total Sección</span>
+            <span class="total-value" id="totalItemsSection">0</span>
+          </div>
+          <div class="total-card">
+            <span class="total-label">Total</span>
+            <span class="total-value" id="totalItems">0</span>
+          </div>
         </div>
       </div>
+
+      <main class="item-list">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col" class="col-edit">Editar</th>
+              <th scope="col" class="col-amount">Cant.</th>
+              <th scope="col">Código de Barras</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+
+          </tbody>
+        </table>
+      </main>
     </div>
 
     <script src="./js/bootstrap.bundle.min.js"></script>
