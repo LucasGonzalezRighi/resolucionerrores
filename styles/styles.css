@@ -14,6 +14,32 @@
     margin: 0;
 }
 
+/* Always-visible cue that scans are being captured even when the input
+   isn't focused. */
+.scan-ready {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #198754;
+}
+
+.scan-ready .bi {
+    animation: scan-pulse 2s ease-in-out infinite;
+}
+
+@keyframes scan-pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+}
+
+/* Brief highlight on the input each time a character is captured while the
+   field isn't focused, so the user sees scans landing. */
+#barcodeInput.capturing {
+    border-color: #198754;
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.35);
+}
+
 .table tr *:last-child {
     width: 70%;
 }
