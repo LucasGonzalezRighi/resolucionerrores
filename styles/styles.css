@@ -86,7 +86,7 @@ body {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    padding: 12px 14px;
+    padding: 8px 14px;
 }
 
 /* --- Section controls ---------------------------------------------------- */
@@ -94,7 +94,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
 .section-label {
@@ -113,21 +113,21 @@ body {
 }
 
 .btn-section {
-    width: 42px;
-    height: 42px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 16px;
     padding: 0;
     margin: 0;
 }
 
 /* --- Scan input ---------------------------------------------------------- */
 .scan-input .form-control {
-    height: var(--touch);
-    font-size: 18px;
+    height: 38px;
+    font-size: 15px;
     border-color: var(--border);
 }
 
@@ -137,8 +137,8 @@ body {
 }
 
 .scan-input .btn {
-    width: var(--touch);
-    font-size: 20px;
+    width: 44px;
+    font-size: 16px;
 }
 
 /* Always-visible cue that scans are being captured even when the input
@@ -174,28 +174,26 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 16px;
     background: var(--surface);
     border-top: 1px solid var(--border);
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
-    padding: 6px 14px;
+    padding: 4px 14px;
 }
 
 .total-item {
     display: flex;
     align-items: center;
-    gap: 6px;
 }
 
 .total-label {
-    font-size: 16px;
+    font-size: 12px;
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
 
 .total-value {
-    font-size: 18px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--accent);
 }
@@ -227,8 +225,8 @@ body {
 
 .item-list tbody td {
     vertical-align: middle;
-    padding-top: 5px;
-    padding-bottom: 5px;
+    padding-top: 3px;
+    padding-bottom: 3px;
     border-color: var(--border);
 }
 
