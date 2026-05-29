@@ -281,6 +281,13 @@ body {
     margin: 0;
 }
 
+.main-menu .app-version {
+    margin: 14px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+}
+
 .swal2-modal.grouped-section .swal2-html-container {
     max-height: 70vh;
     overflow-y: scroll;
