@@ -1,3 +1,7 @@
+// App version shown in the main menu. Keep this in sync with CACHE_VERSION in
+// sw.js so the displayed version matches the cached/served version on the device.
+const APP_VERSION = 'v3';
+
 const barcodeInput = document.getElementById('barcodeInput');
 const barcodeEnter = document.getElementById('barcodeEnter')
 const tableBody = document.getElementById('tableBody');
@@ -13,7 +17,6 @@ let sections = [[]];
 let currentSection = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
-    barcodeInput.focus()
     const sectionsData = localStorage.getItem('sections');
     if (sectionsData === null) return;
     sections = JSON.parse(sectionsData);
@@ -63,7 +66,6 @@ function updateSections() {
     }
     updateItemsInSection();
     totalSectionsSpan.innerText = sections.length;
-    barcodeInput.focus();
 }
 
 function deleteSection() {
@@ -114,7 +116,6 @@ sectionMinus.addEventListener('click', sectionBack);
 sectionDelete.addEventListener('click', deleteSection)
 
 function addBarcode(barcode) {
-    barcodeInput.focus();
     barcode = barcode.trim();
     if (barcode === '') return;
     // Add to list, table and reset
@@ -158,10 +159,12 @@ barcodeInput.addEventListener('keyup', (e) => {
 barcodeEnter.addEventListener('click', () => addBarcode(barcodeInput.value));
 
 // --- Global scan capture ---------------------------------------------------
-// The barcode scanner behaves like a keyboard (types the code + Enter). If the
-// input ever loses focus, scans would be dropped. To avoid that, we also listen
-// at the document level and accumulate the scan into barcodeInput, regardless of
-// what is focused. We skip cases where the user is genuinely typing elsewhere.
+// The barcode scanner behaves like a keyboard (types the code + Enter). We listen
+// at the document level and accumulate the scan into barcodeInput regardless of
+// what is focused, so scans always register WITHOUT needing to focus the input.
+// This is deliberate: we never call .focus() programmatically, so the on-screen
+// keyboard only appears when the user actually taps the field. We skip capture
+// when the user is genuinely typing elsewhere (a dialog or another field).
 
 function isTypingElsewhere() {
     // A SweetAlert dialog (edit / export / import / menu) is open
@@ -204,30 +207,10 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// --- Refocus fallbacks ------------------------------------------------------
-// Belt-and-suspenders: bring focus (and the soft keyboard) back to the input
-// when the user taps an empty area or returns to the app.
-
-function refocusInput() {
-    if (typeof Swal !== 'undefined' && Swal.isVisible && Swal.isVisible()) return;
-    barcodeInput.focus();
-}
-
-document.addEventListener('click', (e) => {
-    // Don't steal focus from interactive controls (buttons, the edit pencil, inputs).
-    if (e.target.closest('button, input, textarea, select, a, .bi')) return;
-    refocusInput();
-});
-
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') refocusInput();
-});
-
 function deleteItem(index) {
     const indexToRemove = sections[currentSection].findIndex(el => el.index === index);
     sections[currentSection].splice(indexToRemove, 1);
     reindexSection();
-    barcodeInput.focus();
 }
 
 function reindexSection() {
@@ -268,8 +251,7 @@ tableBody.addEventListener('click', (e) => {
           ];
         }
       }).then((result) => {
-            if (result.isDismissed) { 
-                barcodeInput.focus();
+            if (result.isDismissed) {
                 return;
             } else if (result.isDenied) deleteItem(index);
             else if (result.isConfirmed) {
@@ -284,7 +266,6 @@ tableBody.addEventListener('click', (e) => {
                 updateItemsInSection();
                 updateTotalItems();
                 storeChanges();
-                barcodeInput.focus();
             }
       });
 });
@@ -316,7 +297,6 @@ function exportCSV() {
         element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvString));
         element.setAttribute('download', filename + ".csv");
         element.click();
-        setTimeout(() => barcodeInput.focus(), 500)
     })
     
 }
@@ -351,7 +331,6 @@ function importCSV() {
                 updateTotalItems();
                 checkSectionControls();
                 storeChanges();
-                setTimeout(() => barcodeInput.focus(), 500);
             }
             reader.readAsText(fileInput.files[0]);
         }
@@ -367,7 +346,6 @@ function deleteAll() {
     updateSections();
     updateTotalItems();
     Swal.close();
-    setTimeout(() => barcodeInput.focus(), 500)
 }
 
 function groupCurrentSection() {
@@ -402,6 +380,7 @@ mainMenu.addEventListener('click', () => {
                     <button class="btn btn-light cancel">Cancelar</button>
                 </div>
             </div>
+            <p class="app-version">Versión ${APP_VERSION}</p>
         </div>
         `,
         showConfirmButton: false,
@@ -411,7 +390,6 @@ mainMenu.addEventListener('click', () => {
             document.querySelector('.main-menu .delete').addEventListener('click', deleteAll);
             document.querySelector('.main-menu .cancel').addEventListener('click', () => {
                 Swal.close();
-                setTimeout(() => barcodeInput.focus(), 500)
             });
             document.querySelector('.main-menu .group').addEventListener('click', groupCurrentSection)
         }

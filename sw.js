@@ -2,7 +2,8 @@
 // changes). Routine edits to index.html / reader.js / styles.css do NOT require
 // a bump — the stale-while-revalidate fetch handler refreshes them automatically
 // the next time the device is online, and they show on the following launch.
-const CACHE_VERSION = "v2";
+// Keep this in sync with APP_VERSION in js/reader.js (shown in the main menu).
+const CACHE_VERSION = "v3";
 const CACHE = "benasu-stock-" + CACHE_VERSION;
 
 const ASSETS = [

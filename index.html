@@ -45,17 +45,6 @@
           <button class="btn btn-primary" id="barcodeEnter" type="button" aria-label="Agregar"><i class="bi bi-arrow-return-left"></i></button>
         </div>
         <p class="scan-ready"><i class="bi bi-broadcast"></i> Listo para escanear</p>
-
-        <div class="totals">
-          <div class="total-card">
-            <span class="total-label">Total Sección</span>
-            <span class="total-value" id="totalItemsSection">0</span>
-          </div>
-          <div class="total-card">
-            <span class="total-label">Total</span>
-            <span class="total-value" id="totalItems">0</span>
-          </div>
-        </div>
       </div>
 
       <main class="item-list">
@@ -72,6 +61,17 @@
           </tbody>
         </table>
       </main>
+
+      <div class="totals">
+        <div class="total-item">
+          <span class="total-label px-2">Sección</span>
+          <span class="total-value" id="totalItemsSection">0</span>
+        </div>
+        <div class="total-item">
+          <span class="total-label px-2">Total</span>
+          <span class="total-value" id="totalItems">0</span>
+        </div>
+      </div>
     </div>
 
     <script src="./js/bootstrap.bundle.min.js"></script>

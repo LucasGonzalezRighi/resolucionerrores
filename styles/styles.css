@@ -168,33 +168,34 @@ body {
     box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.35);
 }
 
-/* --- Totals -------------------------------------------------------------- */
+/* --- Totals: compact bar pinned at the bottom ---------------------------- */
 .totals {
+    flex: 0 0 auto;
     display: flex;
-    gap: 10px;
-    margin-top: 12px;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+    padding: 6px 14px;
 }
 
-.total-card {
-    flex: 1;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 8px 12px;
+.total-item {
     display: flex;
-    flex-direction: column;
     align-items: center;
+    gap: 6px;
 }
 
 .total-label {
-    font-size: 12px;
+    font-size: 16px;
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
 
 .total-value {
-    font-size: 24px;
+    font-size: 18px;
     font-weight: 700;
     color: var(--accent);
 }
@@ -226,9 +227,14 @@ body {
 
 .item-list tbody td {
     vertical-align: middle;
-    padding-top: 12px;
-    padding-bottom: 12px;
+    padding-top: 5px;
+    padding-bottom: 5px;
     border-color: var(--border);
+}
+
+.item-list thead th {
+    padding-top: 6px;
+    padding-bottom: 6px;
 }
 
 .item-list tbody tr:nth-child(odd) {
@@ -279,6 +285,13 @@ body {
 
 .swal2-modal.main-menu .swal2-html-container {
     margin: 0;
+}
+
+.main-menu .app-version {
+    margin: 14px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
 }
 
 .swal2-modal.grouped-section .swal2-html-container {
