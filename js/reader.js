@@ -3,7 +3,6 @@
 const APP_VERSION = 'v3';
 
 const barcodeInput = document.getElementById('barcodeInput');
-const barcodeEnter = document.getElementById('barcodeEnter')
 const tableBody = document.getElementById('tableBody');
 const currentSectionSpan = document.getElementById('currentSectionSpan');
 const totalSectionsSpan = document.getElementById('totalSectionsSpan');
@@ -17,6 +16,7 @@ let sections = [[]];
 let currentSection = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
+    keepFocus();
     const sectionsData = localStorage.getItem('sections');
     if (sectionsData === null) return;
     sections = JSON.parse(sectionsData);
@@ -76,6 +76,7 @@ function deleteSection() {
         showCancelButton: true,
         confirmButtonText: 'Borrar',
         cancelButtonText: 'Cancelar',
+        didClose: keepFocus,
     }).then(result => {
         if (result.isConfirmed) {
             sections.splice(currentSection, 1);
@@ -127,6 +128,7 @@ function addBarcode(barcode) {
     updateItemsInSection();
     updateTotalItems();
     storeChanges();
+    keepFocus();
 }
 
 function addBarcodeToTable(barcodeData) {
@@ -156,25 +158,13 @@ barcodeInput.addEventListener('keyup', (e) => {
     }
 });
 
-barcodeEnter.addEventListener('click', () => addBarcode(barcodeInput.value));
-
-// --- Global scan capture ---------------------------------------------------
-// The barcode scanner behaves like a keyboard (types the code + Enter). We listen
-// at the document level and accumulate the scan into barcodeInput regardless of
-// what is focused, so scans always register WITHOUT needing to focus the input.
-// This is deliberate: we never call .focus() programmatically, so the on-screen
-// keyboard only appears when the user actually taps the field. We skip capture
-// when the user is genuinely typing elsewhere (a dialog or another field).
-
-function isTypingElsewhere() {
-    // A SweetAlert dialog (edit / export / import / menu) is open
-    if (typeof Swal !== 'undefined' && Swal.isVisible && Swal.isVisible()) return true;
-    const active = document.activeElement;
-    if (!active || active === barcodeInput) return false;
-    if (active.isContentEditable) return true;
-    const tag = active.tagName;
-    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
-}
+// --- Scan capture -----------------------------------------------------------
+// The barcode scanner behaves like a keyboard (types the code + Enter). On the
+// picker device, key events are only delivered to a focused element, so we keep
+// barcodeInput focused at all times (see keepFocus). The input is readonly so
+// the on-screen keyboard never appears — but that also means typed characters
+// don't populate it, so we build the value ourselves here. Enter is committed by
+// the keyup handler above. Manual hand-entry happens through manualEntry().
 
 function flashInput() {
     barcodeInput.classList.add('capturing');
@@ -182,18 +172,9 @@ function flashInput() {
     flashInput._timer = setTimeout(() => barcodeInput.classList.remove('capturing'), 150);
 }
 
-document.addEventListener('keydown', (e) => {
-    // The input is focused -> its own keyup handler already covers it.
-    if (document.activeElement === barcodeInput) return;
-    // Don't hijack dialogs, other fields, or shortcut combos.
-    if (isTypingElsewhere()) return;
+barcodeInput.addEventListener('keydown', (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
-
-    if (e.key === 'Enter' || e.keyCode === 13) {
-        e.preventDefault(); // don't also activate a focused button
-        addBarcode(barcodeInput.value);
-        return;
-    }
+    if (e.key === 'Enter' || e.keyCode === 13) return; // committed on keyup
     if (e.key === 'Backspace') {
         e.preventDefault();
         barcodeInput.value = barcodeInput.value.slice(0, -1);
@@ -206,6 +187,39 @@ document.addEventListener('keydown', (e) => {
         flashInput();
     }
 });
+
+// Keep the scan input focused so the scanner's keystrokes always arrive, but
+// never while a SweetAlert dialog is open (its fields need focus). The input is
+// readonly, so focusing it does not summon the on-screen keyboard.
+function keepFocus() {
+    if (typeof Swal !== 'undefined' && Swal.isVisible && Swal.isVisible()) return;
+    barcodeInput.focus({ preventScroll: true }); // preventScroll: input is off-screen
+}
+
+// Re-grab focus whenever a tap (e.g. a section button) steals it, and re-arm it
+// on any tap on the page — covers the case where the initial programmatic focus
+// didn't stick (Android often requires a user gesture). The setTimeout lets any
+// dialog opened by the tap win the focus first (keepFocus skips while one is open).
+barcodeInput.addEventListener('blur', () => setTimeout(keepFocus, 0));
+document.addEventListener('pointerdown', () => setTimeout(keepFocus, 0));
+
+// Manual hand-entry: a normal prompt whose own input gets the keyboard, then we
+// return to readonly scanning. Used for damaged/unreadable barcodes.
+function manualEntry() {
+    Swal.fire({
+        title: 'Ingresar código',
+        input: 'text',
+        inputPlaceholder: 'Código de Barras',
+        showCancelButton: true,
+        confirmButtonText: 'Agregar',
+        cancelButtonText: 'Cancelar',
+        didClose: keepFocus,
+    }).then((result) => {
+        if (result.isConfirmed && result.value) addBarcode(result.value);
+    });
+}
+
+document.getElementById('manualEntry').addEventListener('click', manualEntry);
 
 function deleteItem(index) {
     const indexToRemove = sections[currentSection].findIndex(el => el.index === index);
@@ -244,6 +258,7 @@ tableBody.addEventListener('click', (e) => {
         confirmButtonText: 'Guardar',
         denyButtonText: 'Borrar',
         cancelButtonText: 'Cancelar',
+        didClose: keepFocus,
         preConfirm: () => {
           return [
             document.querySelector('.swal-edit .barcode').value,
@@ -280,6 +295,7 @@ function exportCSV() {
         </div>
         `,
         showCancelButton: true,
+        didClose: keepFocus,
         didOpen() {
             const filenameInput = document.getElementById('filename')
             filenameInput.addEventListener('change', () => {
@@ -384,6 +400,7 @@ mainMenu.addEventListener('click', () => {
         </div>
         `,
         showConfirmButton: false,
+        didClose: keepFocus,
         didOpen() {
             document.querySelector('.main-menu .export').addEventListener('click', exportCSV);
             document.querySelector('.main-menu .import').addEventListener('click', importCSV);

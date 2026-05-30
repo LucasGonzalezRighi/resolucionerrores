@@ -40,11 +40,12 @@
           </div>
         </div>
 
-        <div class="input-group scan-input">
-          <input type="text" id="barcodeInput" class="form-control" placeholder="Código de Barras" aria-label="Código de Barras">
-          <button class="btn btn-primary" id="barcodeEnter" type="button" aria-label="Agregar"><i class="bi bi-arrow-return-left"></i></button>
+        <div class="scan-status">
+          <p class="scan-ready"><i class="bi bi-broadcast"></i> Listo para escanear</p>
+          <button class="btn btn-outline-secondary btn-sm" id="manualEntry" type="button"><i class="bi bi-keyboard"></i> Manual</button>
         </div>
-        <p class="scan-ready"><i class="bi bi-broadcast"></i> Listo para escanear</p>
+        <!-- Hidden but focusable: the readonly capture target for the scanner. -->
+        <input type="text" id="barcodeInput" class="scan-field" aria-label="Código de Barras" readonly inputmode="none" tabindex="-1">
       </div>
 
       <main class="item-list">

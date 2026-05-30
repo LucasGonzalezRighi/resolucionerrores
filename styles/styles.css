@@ -124,32 +124,31 @@ body {
     margin: 0;
 }
 
-/* --- Scan input ---------------------------------------------------------- */
-.scan-input .form-control {
-    height: 38px;
-    font-size: 15px;
-    border-color: var(--border);
+/* --- Scan status row ------------------------------------------------------ */
+/* The capture input is hidden but kept focusable off-screen, so the scanner's
+   keystrokes still arrive without taking up any vertical space. */
+.scan-field {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
 }
 
-.scan-input .form-control:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.2);
+.scan-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-.scan-input .btn {
-    width: 44px;
-    font-size: 16px;
-}
-
-/* Always-visible cue that scans are being captured even when the input
-   isn't focused. */
+/* Always-visible cue that the app is ready to receive scans. */
 .scan-ready {
     display: flex;
     align-items: center;
     gap: 6px;
     font-size: 13px;
     color: var(--success);
-    margin: 6px 2px 0;
+    margin: 0;
 }
 
 .scan-ready .bi {
