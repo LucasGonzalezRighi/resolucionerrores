@@ -1,6 +1,6 @@
 // App version shown in the main menu. Keep this in sync with CACHE_VERSION in
 // sw.js so the displayed version matches the cached/served version on the device.
-const APP_VERSION = 'v3';
+const APP_VERSION = 'v4';
 
 const barcodeInput = document.getElementById('barcodeInput');
 const tableBody = document.getElementById('tableBody');

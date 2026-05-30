@@ -3,7 +3,7 @@
 // a bump — the stale-while-revalidate fetch handler refreshes them automatically
 // the next time the device is online, and they show on the following launch.
 // Keep this in sync with APP_VERSION in js/reader.js (shown in the main menu).
-const CACHE_VERSION = "v3";
+const CACHE_VERSION = "v4";
 const CACHE = "benasu-stock-" + CACHE_VERSION;
 
 const ASSETS = [
