@@ -125,16 +125,6 @@ body {
 }
 
 /* --- Scan status row ------------------------------------------------------ */
-/* The capture input is hidden but kept focusable off-screen, so the scanner's
-   keystrokes still arrive without taking up any vertical space. */
-.scan-field {
-    position: absolute;
-    left: -9999px;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-}
-
 .scan-status {
     display: flex;
     align-items: center;
@@ -158,13 +148,6 @@ body {
 @keyframes scan-pulse {
     0%, 100% { opacity: 0.4; }
     50% { opacity: 1; }
-}
-
-/* Brief highlight on the input each time a character is captured while the
-   field isn't focused, so the user sees scans landing. */
-#barcodeInput.capturing {
-    border-color: var(--success);
-    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.35);
 }
 
 /* --- Totals: compact bar pinned at the bottom ---------------------------- */
