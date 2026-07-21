@@ -115,11 +115,17 @@ sectionDelete.addEventListener('click', deleteSection)
 function addBarcode(barcode) {
     barcode = barcode.trim();
     if (barcode === '') return;
-    // Add to list, table and reset
-    const index = sections[currentSection].length;
-    const barcodeData = {barcode, index, amount: 1};
-    sections[currentSection].push(barcodeData);
-    addBarcodeToTable(barcodeData);
+    // Si el código ya existe en la sección actual, suma +1 a su cantidad
+    // en vez de crear una fila nueva.
+    const existing = sections[currentSection].find(item => item.barcode === barcode);
+    if (existing) {
+        existing.amount += 1;
+        updateBarcodeRow(existing);
+    } else {
+        const barcodeData = {barcode, index: sections[currentSection].length, amount: 1};
+        sections[currentSection].push(barcodeData);
+        addBarcodeToTable(barcodeData);
+    }
     updateItemsInSection();
     updateTotalItems();
     storeChanges();
@@ -145,6 +151,14 @@ function addBarcodeToTable(barcodeData) {
     tableBody.insertBefore(tr, tableBody.firstChild);
 }
 
+// Actualiza la cantidad mostrada de una fila ya existente (por su index).
+function updateBarcodeRow(barcodeData) {
+    const row = tableBody.querySelector(`tr[data-index="${barcodeData.index}"]`);
+    if (!row) return;
+    row.dataset.amount = barcodeData.amount;
+    row.querySelector('.amount').innerText = barcodeData.amount;
+}
+
 
 // --- Scan capture -----------------------------------------------------------
 // The barcode scanner behaves like a keyboard: it types the code's characters
@@ -167,18 +181,42 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Manual hand-entry for damaged/unreadable barcodes: a prompt whose own input
-// gets the keyboard.
+// Entrada continua: la ventana queda ABIERTA y carga un código por vez, ya sea
+// escaneando con la pistola o escribiendo a mano. Cada Enter agrega el código y
+// limpia el campo para el siguiente. Se cierra con "Cerrar".
 function manualEntry() {
     Swal.fire({
-        title: 'Ingresar código',
-        input: 'text',
-        inputPlaceholder: 'Código de Barras',
+        title: 'Escanear / Ingresar',
+        html: `
+        <input type="text" id="manualInput" class="form-control" placeholder="Código de Barras"
+               autocomplete="off" autocapitalize="off" spellcheck="false"/>
+        <p class="manual-info">Escaneá o escribí y Enter — se cargan uno por uno.</p>
+        <p class="manual-info">Cargados: <strong id="manualCount">0</strong><span id="manualLast"></span></p>
+        `,
+        showConfirmButton: false,
         showCancelButton: true,
-        confirmButtonText: 'Agregar',
-        cancelButtonText: 'Cancelar',
-    }).then((result) => {
-        if (result.isConfirmed && result.value) addBarcode(result.value);
+        cancelButtonText: 'Cerrar',
+        focusCancel: false,
+        didOpen() {
+            const input = document.getElementById('manualInput');
+            const countEl = document.getElementById('manualCount');
+            const lastEl = document.getElementById('manualLast');
+            let count = 0;
+            input.focus();
+            input.addEventListener('keydown', (e) => {
+                if (e.key !== 'Enter' && e.keyCode !== 13) return;
+                e.preventDefault();      // no cerrar el diálogo
+                e.stopPropagation();
+                const code = input.value.trim();
+                input.value = '';
+                input.focus();
+                if (code === '') return;
+                addBarcode(code);        // misma lógica: si ya existe, suma cantidad
+                count++;
+                countEl.innerText = count;
+                lastEl.innerText = ' · Último: ' + code;
+            });
+        },
     });
 }
 
