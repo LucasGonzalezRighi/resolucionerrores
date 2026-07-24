@@ -67,6 +67,7 @@ function updateSections() {
 
 function deleteSection() {
     Swal.fire({
+        returnFocus: false,
         title: `Borrar Seccion?`,
         text: `Esta sección contiene ${getItemsInSection(sections[currentSection])} items, borrar?`,
         focusConfirm: false,
@@ -111,6 +112,17 @@ function sectionForward() {
 sectionPlus.addEventListener('click', sectionForward);
 sectionMinus.addEventListener('click', sectionBack);
 sectionDelete.addEventListener('click', deleteSection)
+
+// Ningún botón de la app debe conservar el foco. Si lo conserva, el Enter que la
+// pistola envía al final de cada lectura lo "activa" — por ejemplo, tras tocar
+// "+" crearía una sección nueva por cada producto escaneado. Apenas un botón
+// (fuera de un diálogo de SweetAlert) recibe foco, se lo quitamos. Los botones
+// dentro de un diálogo se dejan intactos para no romper su navegación.
+document.addEventListener('focusin', (e) => {
+    if (Swal.isVisible && Swal.isVisible()) return;   // no interferir con un diálogo abierto
+    const btn = e.target.closest && e.target.closest('button');
+    if (btn && !btn.closest('.swal2-container')) btn.blur();
+});
 
 function addBarcode(barcode) {
     barcode = barcode.trim();
@@ -186,6 +198,7 @@ document.addEventListener('keydown', (e) => {
 // limpia el campo para el siguiente. Se cierra con "Cerrar".
 function manualEntry() {
     Swal.fire({
+        returnFocus: false,
         title: 'Escanear / Ingresar',
         html: `
         <input type="text" id="manualInput" class="form-control" placeholder="Código de Barras"
@@ -243,6 +256,7 @@ tableBody.addEventListener('click', (e) => {
     const targetBarcodeRow = e.target.closest('tr');
     const index = parseInt(targetBarcodeRow.dataset.index);
     Swal.fire({
+        returnFocus: false,
         title: `Editar ${targetBarcodeRow.dataset.barcode}`,
         html: `
         <div class="swal-edit">
@@ -289,6 +303,7 @@ function exportCSV() {
     Swal.close();
     let filename = getFilename();
     Swal.fire({
+        returnFocus: false,
         title: 'Exportar a archivo...',
         html: `<div class="swal-save">
             <input type="text" value="${filename}" class="form-control" id="filename"/>
@@ -378,6 +393,7 @@ function groupCurrentSection() {
 
 mainMenu.addEventListener('click', () => {
     Swal.fire({
+        returnFocus: false,
         title: `Menú Principal`,
         customClass: 'main-menu',
         html: `
