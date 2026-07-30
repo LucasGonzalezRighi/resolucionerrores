@@ -126,18 +126,19 @@ document.addEventListener('focusin', (e) => {
 
 function addBarcode(barcode) {
     barcode = barcode.trim();
+
     if (barcode === '') return;
-    // Si el código ya existe en la sección actual, suma +1 a su cantidad
-    // en vez de crear una fila nueva.
-    const existing = sections[currentSection].find(item => item.barcode === barcode);
-    if (existing) {
-        existing.amount += 1;
-        updateBarcodeRow(existing);
-    } else {
-        const barcodeData = {barcode, index: sections[currentSection].length, amount: 1};
-        sections[currentSection].push(barcodeData);
-        addBarcodeToTable(barcodeData);
-    }
+
+    // Cada lectura genera una fila nueva, aunque el código ya exista.
+    const barcodeData = {
+        barcode,
+        index: sections[currentSection].length,
+        amount: 1
+    };
+
+    sections[currentSection].push(barcodeData);
+    addBarcodeToTable(barcodeData);
+
     updateItemsInSection();
     updateTotalItems();
     storeChanges();
@@ -160,7 +161,7 @@ function addBarcodeToTable(barcodeData) {
     tr.appendChild(td1);
     tr.appendChild(td2);
     tr.appendChild(td3);
-    tableBody.insertBefore(tr, tableBody.firstChild);
+    tableBody.appendChild(tr);
 }
 
 // Actualiza la cantidad mostrada de una fila ya existente (por su index).
