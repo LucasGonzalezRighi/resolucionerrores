@@ -11,8 +11,19 @@ const sectionPlus = document.getElementById('sectionPlus');
 const sectionMinus = document.getElementById('sectionMinus');
 const sectionDelete = document.getElementById('sectionDelete');
 const mainMenu = document.getElementById('mainMenu');
+const itemList = document.querySelector('.item-list');
 let sections = [[]];
 let currentSection = 0;
+
+// Las filas se agregan al final, así que tras cada carga bajamos la lista hasta
+// el fondo para que el producto recién escaneado quede siempre a la vista. Si no
+// hay scroll (pocos items) no pasa nada: ya está todo visible.
+// Salto directo (sin animación): al escanear rápido, un scroll animado se
+// reinicia con cada lectura y quedaría siempre atrasado.
+function scrollToLatest() {
+    if (!itemList) return;
+    itemList.scrollTop = itemList.scrollHeight;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const sectionsData = localStorage.getItem('sections');
@@ -63,6 +74,7 @@ function updateSections() {
     }
     updateItemsInSection();
     totalSectionsSpan.innerText = sections.length;
+    scrollToLatest();   // al cambiar de sección, mostrar el final (lo último cargado)
 }
 
 function deleteSection() {
@@ -138,6 +150,7 @@ function addBarcode(barcode) {
 
     sections[currentSection].push(barcodeData);
     addBarcodeToTable(barcodeData);
+    scrollToLatest();
 
     updateItemsInSection();
     updateTotalItems();
