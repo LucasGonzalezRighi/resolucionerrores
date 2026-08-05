@@ -137,7 +137,7 @@ document.addEventListener('focusin', (e) => {
 });
 
 function isValidBarcode(barcode) {
-    return barcode.length >= 9 && barcode.length <= 15;
+    return barcode.length >= 9 && barcode.length <= 25;
 }
 
 function addBarcode(barcode) {
@@ -150,8 +150,8 @@ function addBarcode(barcode) {
             returnFocus: false,
             icon: 'error',
             title: 'Código inválido',
-            text: `El código "${barcode}" tiene ${barcode.length} caracteres. Debe tener entre 9 y 15.`,
-            timer: 2500,
+            text: `El código "${barcode}" tiene ${barcode.length} caracteres. Debe tener entre 9 y 25.`,
+            timer: 3000,
             showConfirmButton: false
         });
 
