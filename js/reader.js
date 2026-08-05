@@ -136,12 +136,30 @@ document.addEventListener('focusin', (e) => {
     if (btn && !btn.closest('.swal2-container')) btn.blur();
 });
 
+function isValidBarcode(barcode) {
+    return barcode.length >= 9 && barcode.length <= 15;
+}
+
 function addBarcode(barcode) {
     barcode = barcode.trim();
 
-    if (barcode === '') return;
+    if (barcode === '') return false;
 
-    // Cada lectura genera una fila nueva, aunque el código ya exista.
+    if (!isValidBarcode(barcode)) {
+        Swal.fire({
+            returnFocus: false,
+            icon: 'error',
+            title: 'Código inválido',
+            text: `El código "${barcode}" tiene ${barcode.length} caracteres. Debe tener entre 9 y 13.`,
+            timer: 2500,
+            showConfirmButton: false
+        });
+
+        return false;
+    }
+
+    // Cada lectura válida genera una fila nueva,
+    // aunque el código ya exista.
     const barcodeData = {
         barcode,
         index: sections[currentSection].length,
@@ -155,6 +173,8 @@ function addBarcode(barcode) {
     updateItemsInSection();
     updateTotalItems();
     storeChanges();
+
+    return true;
 }
 
 function addBarcodeToTable(barcodeData) {
@@ -230,19 +250,30 @@ function manualEntry() {
             const lastEl = document.getElementById('manualLast');
             let count = 0;
             input.focus();
-            input.addEventListener('keydown', (e) => {
-                if (e.key !== 'Enter' && e.keyCode !== 13) return;
-                e.preventDefault();      // no cerrar el diálogo
-                e.stopPropagation();
-                const code = input.value.trim();
-                input.value = '';
-                input.focus();
-                if (code === '') return;
-                addBarcode(code);        // misma lógica: si ya existe, suma cantidad
-                count++;
-                countEl.innerText = count;
-                lastEl.innerText = ' · Último: ' + code;
-            });
+input.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.keyCode !== 13) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const code = input.value.trim();
+
+    input.value = '';
+    input.focus();
+
+    if (code === '') return;
+
+    const added = addBarcode(code);
+
+    if (!added) {
+        lastEl.innerText = ' · Rechazado: ' + code;
+        return;
+    }
+
+    count++;
+    countEl.innerText = count;
+    lastEl.innerText = ' · Último válido: ' + code;
+});
         },
     });
 }
