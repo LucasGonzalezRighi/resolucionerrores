@@ -137,7 +137,7 @@ document.addEventListener('focusin', (e) => {
 });
 
 function isValidBarcode(barcode) {
-    return barcode.length >= 9 && barcode.length <= 15;
+    return barcode.length >= 9 && barcode.length <= 14;
 }
 
 function addBarcode(barcode) {
