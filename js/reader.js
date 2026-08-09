@@ -138,6 +138,7 @@ document.addEventListener('focusin', (e) => {
 
 // --- Aviso de código rechazado -------------------------------------------
 // Desde el navegador no se puede manejar la luz ni el beeper propios del
+//holsa qyue talskaflfkalñfsk
 // equipo Zebra (eso lo hace DataWedge solo cuando decodifica bien), pero sí
 // podemos hacer sonar el parlante con un tono grave de error, vibrar si el
 // equipo lo permite, y poner la pantalla en rojo un instante.
