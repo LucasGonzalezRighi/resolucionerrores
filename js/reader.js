@@ -136,16 +136,58 @@ document.addEventListener('focusin', (e) => {
     if (btn && !btn.closest('.swal2-container')) btn.blur();
 });
 
+// --- Aviso de código rechazado -------------------------------------------
+// Desde el navegador no se puede manejar la luz ni el beeper propios del
+// equipo Zebra (eso lo hace DataWedge solo cuando decodifica bien), pero sí
+// podemos hacer sonar el parlante con un tono grave de error, vibrar si el
+// equipo lo permite, y poner la pantalla en rojo un instante.
+let errorAudioCtx = null;
+
+function playErrorSound() {
+    try {
+        errorAudioCtx = errorAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        if (errorAudioCtx.state === 'suspended') errorAudioCtx.resume();
+        // Dos tonos graves cortos, bien distintos al beep agudo de lectura OK.
+        [0, 0.28].forEach(offset => {
+            const osc = errorAudioCtx.createOscillator();
+            const gain = errorAudioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.value = 220;
+            gain.gain.setValueAtTime(0.4, errorAudioCtx.currentTime + offset);
+            osc.connect(gain);
+            gain.connect(errorAudioCtx.destination);
+            osc.start(errorAudioCtx.currentTime + offset);
+            osc.stop(errorAudioCtx.currentTime + offset + 0.2);
+        });
+    } catch (e) { /* sin audio disponible, seguimos igual */ }
+    if (navigator.vibrate) navigator.vibrate([180, 80, 180]);
+}
+
+function flashErrorScreen() {
+    document.body.classList.add('scan-error');
+    setTimeout(() => document.body.classList.remove('scan-error'), 700);
+}
+
+function scanError() {
+    playErrorSound();
+    flashErrorScreen();
+}
+
 function isValidBarcode(barcode) {
     return barcode.length >= 9 && barcode.length <= 25;
 }
 
-function addBarcode(barcode) {
+// "amount" es opcional: si no se pasa, se carga 1 unidad (comportamiento
+// original del escáner). Solo la carga manual pasa una cantidad distinta.
+function addBarcode(barcode, amount = 1) {
     barcode = barcode.trim();
+    amount = parseInt(amount);
+    if (isNaN(amount) || amount < 1) amount = 1;
 
     if (barcode === '') return false;
 
     if (!isValidBarcode(barcode)) {
+        scanError();
         Swal.fire({
             returnFocus: false,
             icon: 'error',
@@ -161,7 +203,7 @@ function addBarcode(barcode) {
     const barcodeData = {
         barcode,
         index: sections[currentSection].length,
-        amount: 1
+        amount
     };
 
     sections[currentSection].push(barcodeData);
@@ -229,30 +271,95 @@ document.addEventListener('keydown', (e) => {
 // escaneando con la pistola o escribiendo a mano. Cada Enter agrega el código y
 // limpia el campo para el siguiente. Se cierra con "Cerrar".
 function manualEntry() {
+    // El botón verde "Aceptar" solo maneja la cantidad manual: mientras haya
+    // una cantidad escrita sin aceptar, se bloquea el escaneo/ingreso. Este
+    // handler se define dentro de didOpen y preConfirm lo invoca sin cerrar
+    // el diálogo (devolviendo false).
+    let acceptAmount = null;
+
     Swal.fire({
         returnFocus: false,
         title: 'Escanear / Ingresar',
         html: `
-        <input type="text" id="manualInput" class="form-control" placeholder="Código de Barras"
-               autocomplete="off" autocapitalize="off" spellcheck="false"/>
+        <div class="swal-manual">
+            <div class="input-group">
+                <input type="text" id="manualInput" class="form-control" placeholder="Código de Barras"
+                       autocomplete="off" autocapitalize="off" spellcheck="false"/>
+                <input type="number" id="manualAmount" class="form-control" placeholder="Cant." min="1"
+                       inputmode="numeric" title="Cantidad"/>
+            </div>
+        </div>
         <p class="manual-info">Escaneá o escribí y Enter — se cargan uno por uno.</p>
         <p class="manual-info">Cargados: <strong id="manualCount">0</strong><span id="manualLast"></span></p>
         `,
-        showConfirmButton: false,
+        showConfirmButton: true,
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#198754',
         showCancelButton: true,
         cancelButtonText: 'Cerrar',
         focusCancel: false,
+        focusConfirm: false,
+        preConfirm: () => {
+            if (acceptAmount) acceptAmount();
+            return false;   // nunca cierra el diálogo: Aceptar solo confirma la cantidad
+        },
         didOpen() {
             const input = document.getElementById('manualInput');
+            const amountInput = document.getElementById('manualAmount');
             const countEl = document.getElementById('manualCount');
             const lastEl = document.getElementById('manualLast');
+            const confirmBtn = Swal.getConfirmButton();
             let count = 0;
+            let lastItem = null;   // último código cargado en esta sesión del diálogo
+
+            // El botón Aceptar solo aparece cuando hay una cantidad escrita a mano.
+            confirmBtn.style.display = 'none';
+
+            const amountPending = () => amountInput.value.trim() !== '';
+
+            amountInput.addEventListener('input', () => {
+                confirmBtn.style.display = amountPending() ? '' : 'none';
+            });
+
+            acceptAmount = () => {
+                const amount = parseInt(amountInput.value);
+                if (isNaN(amount) || amount < 1) {
+                    lastEl.innerText = ' · Cantidad inválida';
+                    return;
+                }
+                if (lastItem === null) {
+                    lastEl.innerText = ' · Escaneá un código primero';
+                    return;
+                }
+                // Se suma la cantidad al último código escaneado.
+                lastItem.amount += amount;
+                updateBarcodeRow(lastItem);
+                updateItemsInSection();
+                updateTotalItems();
+                storeChanges();
+
+                count += amount;
+                countEl.innerText = count;
+                lastEl.innerText = ` · +${amount} a ${lastItem.barcode}`;
+
+                amountInput.value = '';
+                confirmBtn.style.display = 'none';
+                input.focus();
+            };
+
             input.focus();
 input.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.keyCode !== 13) return;
 
     e.preventDefault();
     e.stopPropagation();
+
+    // Con una cantidad escrita sin aceptar, no se puede seguir escaneando.
+    if (amountPending()) {
+        input.value = '';
+        lastEl.innerText = ' · Aceptá la cantidad primero (botón verde)';
+        return;
+    }
 
     const code = input.value.trim();
 
@@ -268,9 +375,17 @@ input.addEventListener('keydown', (e) => {
         return;
     }
 
+    lastItem = sections[currentSection][sections[currentSection].length - 1];
     count++;
     countEl.innerText = count;
     lastEl.innerText = ' · Último válido: ' + code;
+});
+// Enter en el campo de cantidad no cierra el diálogo ni acepta: la cantidad
+// se confirma únicamente con el botón verde Aceptar, de forma manual.
+amountInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.keyCode !== 13) return;
+    e.preventDefault();
+    e.stopPropagation();
 });
         },
     });

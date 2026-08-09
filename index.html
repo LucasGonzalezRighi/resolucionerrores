@@ -32,11 +32,14 @@
     <div class="app">
       <div class="scan-zone">
         <div class="controls">
-          <span class="section-label">Sección <strong id="currentSectionSpan">1</strong> / <span id="totalSectionsSpan">1</span></span>
+          <div class="section-info">
+            <span class="section-label">Sección <strong id="currentSectionSpan">1</strong> / <span id="totalSectionsSpan">1</span></span>
+            <button type="button" id="sectionDelete" class="btn btn-danger btn-section disabled"><i class="bi bi-trash"></i></button>
+          </div>
           <div class="section-buttons">
             <button type="button" id="sectionPlus" class="btn btn-primary btn-section"><i class="bi bi-plus"></i></button>
             <button type="button" id="sectionMinus" class="btn btn-primary btn-section disabled"><i class="bi bi-dash"></i></button>
-            <button type="button" id="sectionDelete" class="btn btn-danger btn-section disabled"><i class="bi bi-trash"></i></button>
+            <span class="btn-section btn-section-placeholder" aria-hidden="true"></span>
           </div>
         </div>
 

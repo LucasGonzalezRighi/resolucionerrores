@@ -107,9 +107,22 @@ body {
     font-size: 18px;
 }
 
+.section-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .section-buttons {
     display: flex;
     gap: 8px;
+}
+
+/* Espacio en blanco que ocupa el lugar del botón de eliminar,
+   para que los botones + y − no se muevan de su posición. */
+.btn-section-placeholder {
+    visibility: hidden;
+    pointer-events: none;
 }
 
 .btn-section {
@@ -250,6 +263,25 @@ body {
     padding: 4px;
 }
 
+/* --- Aviso de código rechazado: destello rojo en toda la pantalla -------- */
+body.scan-error::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(220, 53, 69, 0.6);
+    z-index: 3000;           /* por encima de los diálogos de SweetAlert */
+    pointer-events: none;
+    animation: scan-error-flash 0.7s ease-out forwards;
+}
+
+@keyframes scan-error-flash {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
 /* --- SweetAlert dialogs (unchanged behavior) ----------------------------- */
 .swal2-title {
     font-size: 20px;
@@ -261,6 +293,82 @@ body {
 
 .swal-edit .input-group input:first-of-type {
     width: 70%;
+}
+
+/* Diálogo Escanear/Ingresar: código más angosto + cantidad manual al lado,
+   con el mismo formato que el diálogo de edición. La cantidad tiene ancho
+   fijo y el código se achica según la pantalla, para que en pantallas
+   angostas no se corte ni se salga del diálogo. */
+.swal-manual {
+    padding: 5px;
+}
+
+.swal-manual .input-group {
+    flex-wrap: nowrap;
+}
+
+.swal-manual .input-group input:first-of-type {
+    flex: 1 1 auto;
+    width: 70%;
+    min-width: 0;
+}
+
+.swal-manual .input-group input[type="number"] {
+    flex: 0 0 64px;
+    width: 64px;
+    min-width: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+    text-align: center;
+}
+
+/* Sin flechitas del input numérico: en un campo tan chico molestan y la
+   cantidad se escribe siempre a mano. */
+.swal-manual input[type="number"]::-webkit-outer-spin-button,
+.swal-manual input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.swal-manual input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* Pantallas angostas: menos margen interno del diálogo para que los campos
+   y botones entren completos sin cortarse, y controles de sección un poco
+   más compactos para que no queden amontonados. */
+@media (max-width: 360px) {
+    .swal2-popup {
+        width: 96% !important;
+        padding: 0 0 1em;
+    }
+
+    .swal2-html-container {
+        margin: 0.6em 0.8em 0.3em;
+    }
+
+    .section-info {
+        gap: 6px;
+    }
+
+    .section-buttons {
+        gap: 6px;
+    }
+
+    .btn-section {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+    }
+
+    .section-label {
+        font-size: 14px;
+    }
+
+    .section-label strong {
+        font-size: 16px;
+    }
 }
 
 .swal2-modal.main-menu .swal2-html-container {
