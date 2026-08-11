@@ -295,31 +295,113 @@ body.scan-error::after {
     width: 70%;
 }
 
-/* Diálogo Escanear/Ingresar: código más angosto + cantidad manual al lado,
-   con el mismo formato que el diálogo de edición. La cantidad tiene ancho
-   fijo y el código se achica según la pantalla, para que en pantallas
-   angostas no se corte ni se salga del diálogo. */
+/* Diálogo Escanear/Ingresar: bloque centrado con un ancho máximo cómodo, y
+   un label chico sobre cada campo. La cantidad tiene ancho fijo y el código
+   se achica según la pantalla, para que en pantallas angostas no se corte
+   ni se salga del diálogo. --manual-amount-w mantiene alineados el label y
+   el campo de cantidad con un solo valor. */
 .swal-manual {
-    padding: 5px;
+    --manual-amount-w: 68px;
+    /* Ocupa el ancho del diálogo, con un tope para que en pantalla grande
+       el bloque quede centrado y no se estire de más. */
+    width: 100%;
+    max-width: 340px;
+    margin: 0 auto;
+    padding: 4px 2px 0;
+    text-align: center;
+}
+
+/* Labels alineados exactamente sobre su campo: mismas medidas de caja que
+   los inputs de abajo (flex 1 para el código, ancho fijo para la cantidad). */
+.swal-manual .manual-labels {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.swal-manual .manual-labels span {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    line-height: 1.2;
+    /* Nunca en dos líneas: si la fuente del equipo mide distinto y no entra,
+       se recorta con puntos suspensivos en vez de romper la alineación. */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.swal-manual .manual-label-code {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: left;
+    padding-left: 2px;
+}
+
+.swal-manual .manual-label-amount {
+    flex: 0 0 var(--manual-amount-w);
+    text-align: center;
 }
 
 .swal-manual .input-group {
     flex-wrap: nowrap;
+    gap: 8px;
+}
+
+.swal-manual .input-group input {
+    border-radius: 8px;
+    font-size: 16px;   /* 16px evita el zoom automático al tocar en iOS */
 }
 
 .swal-manual .input-group input:first-of-type {
     flex: 1 1 auto;
-    width: 70%;
     min-width: 0;
+    font-family: "SF Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    letter-spacing: 0.02em;
 }
 
 .swal-manual .input-group input[type="number"] {
-    flex: 0 0 64px;
-    width: 64px;
+    flex: 0 0 var(--manual-amount-w);
     min-width: 0;
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 6px;
+    padding-right: 6px;
     text-align: center;
+    font-weight: 700;
+}
+
+/* Posición del diálogo de carga manual: arriba en vez de centrado (el
+   diálogo se abre con position: 'top'). Cambiá --manual-top para subirlo o
+   bajarlo: es el único valor que manda, el resto se acomoda solo. */
+.swal2-container.swal-manual-pos {
+    --manual-top: 8vh;
+}
+
+.swal2-container.swal-manual-pos .swal2-popup {
+    margin-top: var(--manual-top);
+}
+
+/* Texto de ayuda y línea de estado: centrados, chicos y en gris, para que
+   no compitan con los campos ni con los botones. */
+.swal-manual .manual-info {
+    margin: 12px 0 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--muted);
+}
+
+.swal-manual .manual-status {
+    margin: 6px 0 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--text);
+    /* Un código largo no debe estirar el diálogo ni desbordarlo. */
+    overflow-wrap: anywhere;
+}
+
+.swal-manual .manual-status strong {
+    color: var(--accent);
 }
 
 /* Sin flechitas del input numérico: en un campo tan chico molestan y la
@@ -338,14 +420,31 @@ body.scan-error::after {
 /* Pantallas angostas: menos margen interno del diálogo para que los campos
    y botones entren completos sin cortarse, y controles de sección un poco
    más compactos para que no queden amontonados. */
-@media (max-width: 360px) {
+@media (max-width: 480px) {
+    /* Ancho en vw: es directo contra la pantalla, sin depender del padding
+       del contenedor de SweetAlert. */
     .swal2-popup {
-        width: 96% !important;
+        width: 92vw !important;
+        max-width: 92vw;
         padding: 0 0 1em;
     }
 
     .swal2-html-container {
         margin: 0.6em 0.8em 0.3em;
+    }
+}
+
+@media (max-width: 360px) {
+    /* Pantallas muy angostas (el Zebra queda en 289 px): el label del código
+       entra en una sola línea y la casilla de cantidad cede unos píxeles
+       para que el código de 13 dígitos se vea completo. */
+    .swal-manual {
+        --manual-amount-w: 58px;
+    }
+
+    .swal-manual .manual-labels span {
+        font-size: 10px;
+        letter-spacing: 0.03em;
     }
 
     .section-info {

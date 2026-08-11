@@ -77,6 +77,10 @@ function updateSections() {
     scrollToLatest();   // al cambiar de sección, mostrar el final (lo último cargado)
 }
 
+// Color del botón que confirma un borrado. En rojo para que se distinga de
+// un botón de acción común: lo que hace no se puede deshacer.
+const DELETE_BUTTON_COLOR = '#dc3545';
+
 function deleteSection() {
     Swal.fire({
         returnFocus: false,
@@ -85,6 +89,7 @@ function deleteSection() {
         focusConfirm: false,
         showCancelButton: true,
         confirmButtonText: 'Borrar',
+        confirmButtonColor: DELETE_BUTTON_COLOR,
         cancelButtonText: 'Cancelar',
     }).then(result => {
         if (result.isConfirmed) {
@@ -138,7 +143,6 @@ document.addEventListener('focusin', (e) => {
 
 // --- Aviso de código rechazado -------------------------------------------
 // Desde el navegador no se puede manejar la luz ni el beeper propios del
-//holsa qyue talskaflfkalñfsk
 // equipo Zebra (eso lo hace DataWedge solo cuando decodifica bien), pero sí
 // podemos hacer sonar el parlante con un tono grave de error, vibrar si el
 // equipo lo permite, y poner la pantalla en rojo un instante.
@@ -180,7 +184,10 @@ function isValidBarcode(barcode) {
 
 // "amount" es opcional: si no se pasa, se carga 1 unidad (comportamiento
 // original del escáner). Solo la carga manual pasa una cantidad distinta.
-function addBarcode(barcode, amount = 1) {
+// "showAlert" en false evita abrir el cartel de error: lo usa la ventana
+// Manual, porque un Swal nuevo reemplazaría al diálogo abierto y lo cerraría.
+// El sonido de error y el destello rojo se disparan igual en ambos casos.
+function addBarcode(barcode, amount = 1, showAlert = true) {
     barcode = barcode.trim();
     amount = parseInt(amount);
     if (isNaN(amount) || amount < 1) amount = 1;
@@ -189,14 +196,17 @@ function addBarcode(barcode, amount = 1) {
 
     if (!isValidBarcode(barcode)) {
         scanError();
-        Swal.fire({
-            returnFocus: false,
-            icon: 'error',
-            title: 'Código inválido',
-            text: `El código "${barcode}" tiene ${barcode.length} caracteres. Debe tener entre 9 y 25.`,
-            timer: 3000,
-            showConfirmButton: false
-        });
+
+        if (showAlert) {
+            Swal.fire({
+                returnFocus: false,
+                icon: 'error',
+                title: 'Código inválido',
+                text: `El código "${barcode}" tiene ${barcode.length} caracteres. Debe tener entre 9 y 25.`,
+                timer: 3000,
+                showConfirmButton: false
+            });
+        }
 
         return false;
     }
@@ -272,26 +282,30 @@ document.addEventListener('keydown', (e) => {
 // escaneando con la pistola o escribiendo a mano. Cada Enter agrega el código y
 // limpia el campo para el siguiente. Se cierra con "Cerrar".
 function manualEntry() {
-    // El botón verde "Aceptar" solo maneja la cantidad manual: mientras haya
-    // una cantidad escrita sin aceptar, se bloquea el escaneo/ingreso. Este
+    // Carga manual: código + cantidad + "Aceptar". El botón verde confirma el
+    // dato y lo agrega a la lista como una fila nueva; "Cerrar" cancela. Este
     // handler se define dentro de didOpen y preConfirm lo invoca sin cerrar
-    // el diálogo (devolviendo false).
-    let acceptAmount = null;
+    // el diálogo (devolviendo false), para poder cargar uno tras otro.
+    let confirmEntry = null;
 
     Swal.fire({
         returnFocus: false,
         title: 'Escanear / Ingresar',
         html: `
         <div class="swal-manual">
+            <div class="manual-labels">
+                <span class="manual-label-code">Código de barras</span>
+                <span class="manual-label-amount">Cant.</span>
+            </div>
             <div class="input-group">
-                <input type="text" id="manualInput" class="form-control" placeholder="Código de Barras"
+                <input type="text" id="manualInput" class="form-control" placeholder="Escaneá o escribí"
                        autocomplete="off" autocapitalize="off" spellcheck="false"/>
-                <input type="number" id="manualAmount" class="form-control" placeholder="Cant." min="1"
+                <input type="number" id="manualAmount" class="form-control" placeholder="1" min="1"
                        inputmode="numeric" title="Cantidad"/>
             </div>
+            <p class="manual-info">Aceptar carga y cierra. Escaneando se carga solo.</p>
+            <p class="manual-status">Cargados: <strong id="manualCount">0</strong><span id="manualLast"></span></p>
         </div>
-        <p class="manual-info">Escaneá o escribí y Enter — se cargan uno por uno.</p>
-        <p class="manual-info">Cargados: <strong id="manualCount">0</strong><span id="manualLast"></span></p>
         `,
         showConfirmButton: true,
         confirmButtonText: 'Aceptar',
@@ -300,94 +314,87 @@ function manualEntry() {
         cancelButtonText: 'Cerrar',
         focusCancel: false,
         focusConfirm: false,
+        // Sube el cuadro: centrado tapaba las filas de la lista y quedaba
+        // muy cerca del teclado en pantalla. Solo afecta a este diálogo.
+        // La separación exacta con el borde de arriba se ajusta desde el CSS
+        // (variable --manual-top en .swal-manual-pos).
+        position: 'top',
+        customClass: { container: 'swal-manual-pos' },
         preConfirm: () => {
-            if (acceptAmount) acceptAmount();
-            return false;   // nunca cierra el diálogo: Aceptar solo confirma la cantidad
+            // Devolver true cierra el diálogo, false lo deja abierto. El botón
+            // Aceptar es la carga manual: cargó bien -> se cierra solo. Si el
+            // dato estaba mal, queda abierto para corregirlo sin reabrirlo.
+            return confirmEntry ? confirmEntry() : false;
         },
         didOpen() {
             const input = document.getElementById('manualInput');
             const amountInput = document.getElementById('manualAmount');
             const countEl = document.getElementById('manualCount');
             const lastEl = document.getElementById('manualLast');
-            const confirmBtn = Swal.getConfirmButton();
-            let count = 0;
-            let lastItem = null;   // último código cargado en esta sesión del diálogo
+            let count = 0;   // unidades cargadas en esta sesión del diálogo
 
-            // El botón Aceptar solo aparece cuando hay una cantidad escrita a mano.
-            confirmBtn.style.display = 'none';
+            // Confirma lo que haya en los campos: agrega el código a la lista con
+            // la cantidad indicada (una fila nueva) y deja todo listo para el
+            // siguiente. Sin cantidad escrita se carga 1, que es el caso del
+            // escaneo con pistola o QR: el lector manda el código y Enter solo.
+            // Devuelve true solo si el dato se cargó: preConfirm usa eso para
+            // cerrar el diálogo cuando la carga fue por el botón Aceptar.
+            confirmEntry = () => {
+                const code = input.value.trim();
 
-            const amountPending = () => amountInput.value.trim() !== '';
+                if (code === '') {
+                    lastEl.innerText = ' · Escribí un código';
+                    input.focus();
+                    return false;
+                }
 
-            amountInput.addEventListener('input', () => {
-                confirmBtn.style.display = amountPending() ? '' : 'none';
-            });
+                const raw = amountInput.value.trim();
+                const amount = raw === '' ? 1 : parseInt(raw);
 
-            acceptAmount = () => {
-                const amount = parseInt(amountInput.value);
                 if (isNaN(amount) || amount < 1) {
+                    scanError();
                     lastEl.innerText = ' · Cantidad inválida';
-                    return;
+                    amountInput.focus();
+                    return false;
                 }
-                if (lastItem === null) {
-                    lastEl.innerText = ' · Escaneá un código primero';
-                    return;
+
+                // addBarcode valida el código (largo 9-25) y, si lo rechaza,
+                // avisa con el sonido de error y la pantalla en rojo. Se le
+                // pasa showAlert = false para que el cartel de error no cierre
+                // esta ventana: el motivo se muestra acá abajo.
+                const added = addBarcode(code, amount, false);
+
+                // Los campos se limpian siempre: un código rechazado no debe
+                // quedar en pantalla para volver a cargarse por accidente.
+                input.value = '';
+                amountInput.value = '';
+                input.focus();
+
+                if (!added) {
+                    lastEl.innerText = ` · Rechazado: ${code} (${code.length} caracteres, deben ser 9 a 25)`;
+                    return false;
                 }
-                // Se suma la cantidad al último código escaneado.
-                lastItem.amount += amount;
-                updateBarcodeRow(lastItem);
-                updateItemsInSection();
-                updateTotalItems();
-                storeChanges();
 
                 count += amount;
                 countEl.innerText = count;
-                lastEl.innerText = ` · +${amount} a ${lastItem.barcode}`;
-
-                amountInput.value = '';
-                confirmBtn.style.display = 'none';
-                input.focus();
+                lastEl.innerText = ` · ${code} x${amount}`;
+                return true;
             };
 
             input.focus();
-input.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' && e.keyCode !== 13) return;
 
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Con una cantidad escrita sin aceptar, no se puede seguir escaneando.
-    if (amountPending()) {
-        input.value = '';
-        lastEl.innerText = ' · Aceptá la cantidad primero (botón verde)';
-        return;
-    }
-
-    const code = input.value.trim();
-
-    input.value = '';
-    input.focus();
-
-    if (code === '') return;
-
-    const added = addBarcode(code);
-
-    if (!added) {
-        lastEl.innerText = ' · Rechazado: ' + code;
-        return;
-    }
-
-    lastItem = sections[currentSection][sections[currentSection].length - 1];
-    count++;
-    countEl.innerText = count;
-    lastEl.innerText = ' · Último válido: ' + code;
-});
-// Enter en el campo de cantidad no cierra el diálogo ni acepta: la cantidad
-// se confirma únicamente con el botón verde Aceptar, de forma manual.
-amountInput.addEventListener('keydown', (e) => {
+// Enter en cualquiera de los dos campos hace lo mismo que el botón Aceptar.
+// Es lo que permite que la pistola siga cargando sola: manda el código y un
+// Enter al final, sin cantidad escrita, así que entra con 1.
+const onEnter = (e) => {
     if (e.key !== 'Enter' && e.keyCode !== 13) return;
     e.preventDefault();
     e.stopPropagation();
-});
+    confirmEntry();
+};
+
+input.addEventListener('keydown', onEnter);
+amountInput.addEventListener('keydown', onEnter);
         },
     });
 }
@@ -528,13 +535,38 @@ function importCSV() {
     fileInput.click();
 }
 
+// Borra todo sin preguntar. Ojo: importCSV() la usa para limpiar antes de
+// cargar el archivo, así que la confirmación NO va acá adentro (si no,
+// importar un CSV pediría confirmación en el medio). El botón "Borrar" del
+// menú principal pasa por confirmDeleteAll().
 function deleteAll() {
     sections = [[]];
     currentSection = 0;
     storeChanges();
     updateSections();
     updateTotalItems();
+    checkSectionControls();
     Swal.close();
+}
+
+// Confirmación del "Borrar" del menú principal: se lleva puestas TODAS las
+// secciones, así que avisa cuánto se pierde antes de hacerlo.
+function confirmDeleteAll() {
+    const items = sections.reduce((acc, section) => acc + getItemsInSection(section), 0);
+    const plural = sections.length === 1 ? 'sección' : 'secciones';
+
+    Swal.fire({
+        returnFocus: false,
+        title: 'Borrar todo?',
+        text: `Se van a borrar ${items} items de ${sections.length} ${plural}. Esto no se puede deshacer.`,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Borrar',
+        confirmButtonColor: DELETE_BUTTON_COLOR,
+        cancelButtonText: 'Cancelar',
+    }).then(result => {
+        if (result.isConfirmed) deleteAll();
+    });
 }
 
 function groupCurrentSection() {
@@ -577,7 +609,7 @@ mainMenu.addEventListener('click', () => {
         didOpen() {
             document.querySelector('.main-menu .export').addEventListener('click', exportCSV);
             document.querySelector('.main-menu .import').addEventListener('click', importCSV);
-            document.querySelector('.main-menu .delete').addEventListener('click', deleteAll);
+            document.querySelector('.main-menu .delete').addEventListener('click', confirmDeleteAll);
             document.querySelector('.main-menu .cancel').addEventListener('click', () => {
                 Swal.close();
             });
