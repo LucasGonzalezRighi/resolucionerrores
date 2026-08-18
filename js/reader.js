@@ -291,8 +291,13 @@ function scanError() {
     flashErrorScreen();
 }
 
+// Largo aceptado para un código. Está en constantes para que el rango y los
+// mensajes de error no puedan quedar diciendo cosas distintas.
+const BARCODE_MIN_LENGTH = 5;
+const BARCODE_MAX_LENGTH = 25;
+
 function isValidBarcode(barcode) {
-    return barcode.length >= 9 && barcode.length <= 25;
+    return barcode.length >= BARCODE_MIN_LENGTH && barcode.length <= BARCODE_MAX_LENGTH;
 }
 
 // "amount" es opcional: si no se pasa, se carga 1 unidad (comportamiento
@@ -315,7 +320,7 @@ function addBarcode(barcode, amount = 1, showAlert = true) {
                 returnFocus: false,
                 icon: 'error',
                 title: 'Código inválido',
-                text: `El código "${barcode}" tiene ${barcode.length} caracteres. Debe tener entre 9 y 25.`,
+                text: `El código "${barcode}" tiene ${barcode.length} caracteres. Debe tener entre ${BARCODE_MIN_LENGTH} y ${BARCODE_MAX_LENGTH}.`,
                 timer: 3000,
                 showConfirmButton: false
             });
@@ -488,7 +493,7 @@ function manualEntry() {
                 input.focus();
 
                 if (!added) {
-                    lastEl.innerText = ` · Rechazado: ${code} (${code.length} caracteres, deben ser 9 a 25)`;
+                    lastEl.innerText = ` · Rechazado: ${code} (${code.length} caracteres, deben ser ${BARCODE_MIN_LENGTH} a ${BARCODE_MAX_LENGTH})`;
                     return false;
                 }
 
