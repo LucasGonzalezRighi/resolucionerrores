@@ -1,6 +1,6 @@
 // App version shown in the main menu. Keep this in sync with CACHE_VERSION in
 // sw.js so the displayed version matches the cached/served version on the device.
-const APP_VERSION = 'v5';
+const APP_VERSION = 'v6';
 
 const tableBody = document.getElementById('tableBody');
 const currentSectionSpan = document.getElementById('currentSectionSpan');
@@ -10,6 +10,11 @@ const totalItems = document.getElementById('totalItems');
 const sectionPlus = document.getElementById('sectionPlus');
 const sectionMinus = document.getElementById('sectionMinus');
 const sectionDelete = document.getElementById('sectionDelete');
+const sectionJump = document.getElementById('sectionJump');
+const jumpPanel = document.getElementById('jumpPanel');
+const jumpInput = document.getElementById('jumpInput');
+const jumpGo = document.getElementById('jumpGo');
+const jumpList = document.getElementById('jumpList');
 const mainMenu = document.getElementById('mainMenu');
 const itemList = document.querySelector('.item-list');
 let sections = [[]];
@@ -129,6 +134,114 @@ function sectionForward() {
 sectionPlus.addEventListener('click', sectionForward);
 sectionMinus.addEventListener('click', sectionBack);
 sectionDelete.addEventListener('click', deleteSection)
+
+// --- Ir a sección ---------------------------------------------------------
+// Desplegable propio (no un diálogo) para saltar a cualquier sección: se
+// escribe el número o se toca de la lista. Se arma cada vez que se abre, así
+// siempre muestra las secciones y las cantidades del momento.
+function isJumpOpen() {
+    return !jumpPanel.hidden;
+}
+
+function renderJumpList() {
+    jumpList.innerHTML = '';
+
+    sections.forEach((section, index) => {
+        const li = document.createElement('li');
+        li.className = 'jump-item' + (index === currentSection ? ' is-current' : '');
+        li.dataset.section = index;
+
+        const name = document.createElement('span');
+        name.className = 'jump-item-name';
+        name.innerText = `Sección ${index + 1}`;
+
+        const count = document.createElement('span');
+        count.className = 'jump-item-count';
+        count.innerText = getItemsInSection(section);
+
+        li.appendChild(name);
+        li.appendChild(count);
+        jumpList.appendChild(li);
+    });
+}
+
+function openJump() {
+    renderJumpList();
+    jumpInput.value = '';
+    jumpPanel.hidden = false;
+    sectionJump.classList.add('is-open');
+    sectionJump.setAttribute('aria-expanded', 'true');
+
+    // Dejar a la vista la sección en la que estamos parados.
+    const current = jumpList.querySelector('.is-current');
+    if (current) current.scrollIntoView({ block: 'nearest' });
+
+    // El Zebra tiene teclado físico, así que enfocar el campo permite tipear
+    // el número directo sin tocar nada más.
+    jumpInput.focus();
+}
+
+function closeJump() {
+    if (!isJumpOpen()) return;
+    jumpPanel.hidden = true;
+    sectionJump.classList.remove('is-open');
+    sectionJump.setAttribute('aria-expanded', 'false');
+}
+
+function goToSection(index) {
+    if (isNaN(index) || index < 0 || index >= sections.length) {
+        scanError();
+        return false;
+    }
+
+    currentSection = index;
+    checkSectionControls();
+    updateSections();
+    closeJump();
+    return true;
+}
+
+sectionJump.addEventListener('click', (e) => {
+    e.stopPropagation();
+    isJumpOpen() ? closeJump() : openJump();
+});
+
+// Clic en un renglón de la lista.
+jumpList.addEventListener('click', (e) => {
+    const item = e.target.closest('.jump-item');
+    if (!item) return;
+    goToSection(parseInt(item.dataset.section));
+});
+
+function jumpFromInput() {
+    const value = jumpInput.value.trim();
+    if (value === '') {
+        jumpInput.focus();
+        return;
+    }
+    // En pantalla se numera desde 1; internamente desde 0.
+    goToSection(parseInt(value) - 1);
+}
+
+jumpGo.addEventListener('click', jumpFromInput);
+
+jumpInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.keyCode !== 13) return;
+    e.preventDefault();
+    e.stopPropagation();
+    jumpFromInput();
+});
+
+// Se cierra al tocar fuera o con Escape, como cualquier desplegable.
+document.addEventListener('click', (e) => {
+    if (!isJumpOpen()) return;
+    if (jumpPanel.contains(e.target) || sectionJump.contains(e.target)) return;
+    closeJump();
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isJumpOpen()) closeJump();
+});
 
 // Ningún botón de la app debe conservar el foco. Si lo conserva, el Enter que la
 // pistola envía al final de cada lectura lo "activa" — por ejemplo, tras tocar
@@ -266,6 +379,10 @@ let scanBuffer = '';
 
 document.addEventListener('keydown', (e) => {
     if (Swal.isVisible && Swal.isVisible()) return;   // a modal is open — ignore
+    // Si hay un campo enfocado (el número de "Ir a sección", por ejemplo), lo
+    // que se teclea es para ese campo: no debe entrar al buffer del escáner ni
+    // disparar una carga con el Enter.
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.key === 'Enter' || e.keyCode === 13) {
         e.preventDefault();                            // don't activate a focused button

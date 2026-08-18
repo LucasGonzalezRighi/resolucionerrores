@@ -11,7 +11,10 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
-          navigator.serviceWorker.register('/stock-counter/sw.js', {scope: '/stock-counter/'}).then(function(registration) {
+          // Ruta relativa a propósito: el alcance del service worker queda en
+          // la carpeta donde está sw.js, así funciona en cualquier subcarpeta
+          // de GitHub Pages sin tocar nada si el repo cambia de nombre.
+          navigator.serviceWorker.register('./sw.js').then(function(registration) {
             // Registration was successful
             console.log('ServiceWorker registration successful with scope: ', registration.scope);
           }, function(err) {
@@ -34,7 +37,21 @@
         <div class="controls">
           <div class="section-info">
             <span class="section-label">Sección <strong id="currentSectionSpan">1</strong> / <span id="totalSectionsSpan">1</span></span>
+
+            <button type="button" id="sectionJump" class="btn-section btn-jump"
+                    aria-label="Ir a sección" aria-expanded="false" aria-controls="jumpPanel"><i class="bi bi-chevron-down"></i></button>
+
             <button type="button" id="sectionDelete" class="btn btn-danger btn-section disabled"><i class="bi bi-trash"></i></button>
+
+            <div class="jump-panel" id="jumpPanel" hidden>
+              <span class="jump-title">Ir a sección</span>
+              <div class="jump-form">
+                <input type="number" id="jumpInput" min="1" inputmode="numeric"
+                       placeholder="N°" autocomplete="off" aria-label="Número de sección"/>
+                <button type="button" id="jumpGo">Ir</button>
+              </div>
+              <ul class="jump-list" id="jumpList"></ul>
+            </div>
           </div>
           <div class="section-buttons">
             <button type="button" id="sectionPlus" class="btn btn-primary btn-section"><i class="bi bi-plus"></i></button>

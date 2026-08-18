@@ -5,12 +5,20 @@
       {
         "src": "icon/icon.png",
         "sizes": "512x512",
-        "type": "image/png"
+        "type": "image/png",
+        "purpose": "any"
+      },
+      {
+        "src": "icon/icon.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "maskable"
       }
     ],
-    "start_url": "/stock-counter/",
+    "start_url": "./",
     "background_color": "#ffffff",
     "display": "standalone",
-    "scope": "/stock-counter/",
+    "orientation": "portrait",
+    "scope": "./",
     "theme_color": "#0d6efd"
   }

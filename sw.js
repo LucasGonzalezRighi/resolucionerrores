@@ -3,21 +3,26 @@
 // a bump — the stale-while-revalidate fetch handler refreshes them automatically
 // the next time the device is online, and they show on the following launch.
 // Keep this in sync with APP_VERSION in js/reader.js (shown in the main menu).
-const CACHE_VERSION = "v4";
+const CACHE_VERSION = "v6";
 const CACHE = "benasu-stock-" + CACHE_VERSION;
 
+// Rutas relativas al propio sw.js: andan en cualquier subcarpeta de GitHub
+// Pages sin editarlas. Antes apuntaban a /stock-counter/ y en la carpeta
+// /resolucionerrores/ daban 404; como cache.addAll falla entero si una sola
+// falla, el pre-cacheo no se hacía nunca y la app jamás quedaba offline.
 const ASSETS = [
-  "../stock-counter/",
-  "../stock-counter/index.html",
-  "../stock-counter/styles/styles.css",
-  "../stock-counter/styles/bootstrap.min.css",
-  "../stock-counter/styles/bootstrap-icons.min.css",
-  "../stock-counter/styles/fonts/bootstrap-icons.woff2",
-  "../stock-counter/js/reader.js",
-  "../stock-counter/js/bootstrap.bundle.min.js",
-  "../stock-counter/js/sweetalert2.min.js",
-  "../stock-counter/js/papaparse.min.js",
-  "../stock-counter/icon/icon.png",
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./styles/styles.css",
+  "./styles/bootstrap.min.css",
+  "./styles/bootstrap-icons.min.css",
+  "./styles/fonts/bootstrap-icons.woff2",
+  "./js/reader.js",
+  "./js/bootstrap.bundle.min.js",
+  "./js/sweetalert2.min.js",
+  "./js/papaparse.min.js",
+  "./icon/icon.png",
 ];
 
 // Pre-cache the app shell, then take over immediately so the next launch is

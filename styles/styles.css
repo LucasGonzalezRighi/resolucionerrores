@@ -10,6 +10,11 @@
     --muted: #6b7684;
     --touch: 48px;
     --header-h: 56px;
+    /* Acento flúor del botón "Ir a sección". Cambiando esto cambia la flecha
+       y el botón "Ir" del desplegable a la vez. */
+    --fluor: #ccff00;
+    --gray-top: #6b7480;
+    --gray-bottom: #454c56;
 }
 
 * {
@@ -100,6 +105,9 @@ body {
 .section-label {
     font-size: 15px;
     color: var(--muted);
+    /* En una sola línea siempre: con el botón nuevo la fila quedó justa y el
+       texto se partía en tres renglones en pantallas angostas. */
+    white-space: nowrap;
 }
 
 .section-label strong {
@@ -111,6 +119,166 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+    /* Ancla del desplegable "Ir a sección". */
+    position: relative;
+}
+
+/* --- Botón "Ir a sección" ------------------------------------------------ */
+/* Dos grises en degradado y la flecha en flúor: se distingue del + / − azules
+   y del tacho rojo sin gritar. */
+.btn-jump {
+    border: 1px solid #3a414b;
+    background: linear-gradient(180deg, var(--gray-top) 0%, var(--gray-bottom) 100%);
+    color: var(--fluor);
+    cursor: pointer;
+    line-height: 1;
+    box-shadow: 0 1px 2px rgba(31, 39, 51, 0.18);
+    transition: filter 0.15s ease;
+}
+
+.btn-jump:active {
+    filter: brightness(1.15);
+}
+
+/* La flecha gira al abrir: avisa el estado sin agregar ningún texto.
+   270° en sentido horario (en CSS los grados positivos giran a la derecha),
+   así que el chevron termina apuntando hacia la derecha. La transición es un
+   poco más larga que un giro común porque el recorrido es de tres cuartos. */
+.btn-jump .bi {
+    transition: transform 0.26s ease;
+}
+
+.btn-jump.is-open .bi {
+    transform: rotate(270deg);
+}
+
+/* --- Panel desplegable --------------------------------------------------- */
+.jump-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 60;
+    width: 220px;
+    /* Anclado a la izquierda y con tope de ancho: en pantallas de 289 px no
+       se sale nunca por el costado. */
+    max-width: calc(100vw - 28px);
+    padding: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 10px 24px rgba(31, 39, 51, 0.18);
+    animation: jump-in 0.14s ease-out;
+}
+
+@keyframes jump-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.jump-title {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 2px 6px;
+}
+
+.jump-form {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.jump-form input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 34px;
+    padding: 0 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-align: center;
+    font-size: 16px;   /* 16px evita el zoom automático al tocar en iOS */
+    font-weight: 700;
+    color: var(--text);
+}
+
+.jump-form input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.jump-form input::-webkit-outer-spin-button,
+.jump-form input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.jump-form input {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.jump-form button {
+    flex: 0 0 46px;
+    height: 34px;
+    border: 1px solid #3a414b;
+    border-radius: 8px;
+    background: linear-gradient(180deg, var(--gray-top) 0%, var(--gray-bottom) 100%);
+    color: var(--fluor);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.jump-form button:active {
+    filter: brightness(1.15);
+}
+
+/* --- Lista de secciones -------------------------------------------------- */
+.jump-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 190px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.jump-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.jump-item + .jump-item {
+    margin-top: 2px;
+}
+
+.jump-item:active {
+    background: #eef1f5;
+}
+
+.jump-item.is-current {
+    background: rgba(13, 110, 253, 0.09);
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.jump-item-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.jump-item.is-current .jump-item-count {
+    color: var(--accent);
 }
 
 .section-buttons {
@@ -447,12 +615,20 @@ body.scan-error::after {
         letter-spacing: 0.03em;
     }
 
+    /* La fila de controles tiene 5 elementos y en 289 px queda al límite:
+       se recorta el margen lateral y las separaciones para que entre todo
+       en un solo renglón. */
+    .scan-zone {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
     .section-info {
-        gap: 6px;
+        gap: 5px;
     }
 
     .section-buttons {
-        gap: 6px;
+        gap: 5px;
     }
 
     .btn-section {
@@ -462,11 +638,11 @@ body.scan-error::after {
     }
 
     .section-label {
-        font-size: 14px;
+        font-size: 13px;
     }
 
     .section-label strong {
-        font-size: 16px;
+        font-size: 15px;
     }
 }
 
